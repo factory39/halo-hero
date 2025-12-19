@@ -12,8 +12,8 @@ class Halo extends ShaderBase {
 
   getDefaultOptions() {
     return {
-      baseColor: 0x7d01,
-      color2: 0x7d01,
+      baseColor: 0xD1FF73,
+      color2: 0x004E44,
       backgroundColor: 0x0,
       amplitudeFactor: 2.50,
       ringFactor: 1.0,
@@ -315,12 +315,22 @@ void main() {
   // float nn = snoise(uv * 0.25 + iTime * 0.005 + mixedColor.b * 0.01) * 20.;
   // rainbowInput += nn;
 
-  float brightness = 0.7;
-  vec4 rainbow = sqrt(j2hue(cos(rainbowInput))) + vec4(baseColor,0) - 1.0 + brightness;
+  float colorMix = 0.5 + 0.5 * sin(rainbowInput);
+  vec3 color = mix(baseColor, color2, colorMix);
   float factor = smoothstep(1., .9, edge) * pow(edge, 2.);
-  vec3 color = rainbow.rgb * smoothstep(1., .9, edge) * pow(edge, 20.);
+  color = color * smoothstep(1., .9, edge) * pow(edge, 20.);
+  
+  vec3 finalColor = mixedColor + color;
+  
+  float maxBrandBrightness = max(max(max(baseColor.r, baseColor.g), baseColor.b), 
+                                 max(max(color2.r, color2.g), color2.b));
+  float maxChannel = max(max(finalColor.r, finalColor.g), finalColor.b);
+  float scale = min(1.0, maxBrandBrightness / max(maxChannel, 0.001));
+  finalColor = finalColor * scale;
+  finalColor = clamp(finalColor, vec3(0.0), vec3(1.0));
+  
   vec4 ring = vec4(
-    backgroundColor + clamp( mixedColor + color, 0., 1.)
+    backgroundColor + finalColor
     , 1.0);
 
   // float t = fworley(uv * u_resolution.xy / 1500.0);
